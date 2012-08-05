@@ -34,7 +34,7 @@ root = this
 
 # The top-level namespace. All public SpinalCord classes and modules will
 # be attached to this. Exported for both CommonJS and the browser.
-if (typeof exports !== 'undefined')
+if (typeof exports isnt 'undefined')
   SpinalCord = exports
 else
   SpinalCord = root.SpinalCord = _.extend({}, Backbone);
@@ -46,28 +46,34 @@ authFetch = (options) ->
   options = _.extend(options, user)
   super options
 
-class SpinalCord.AuthModel extends Backbone.Model
+class SpinalCord.Auth.Model extends Backbone.Model
   fetch: authFetch
   
-class SpinalCord.AuthCollection extends Backbone.Collection
+class SpinalCord.Auth.Collection extends Backbone.Collection
   fetch: authFetch
-  
   
 class SpinalCord.User 
   # user impl. here
 
 # looks for <%= yield %>, to subsitute subview 
+# things are not that clear still
 class SpinalCord.Layout 
   constructor: (@template) ->
-  
-  #work on this 
-  addLayout: (view) ->
-    newRender = @template yield: view
-  
+   
+  wrapWithLayout: (view) ->
+    renderer = -> 
+      @template yield: view.render()
+
+# Better Dispatch aganist different View types  
 class SpinalCord.View extends Backbone.View
   initialize(options) ->
     if (layout = options.withLayout)?
-      layout
+      @render = layout.wrapWithLayout(this)
+      
+class SpinalCord.ErrorView extends Backbone.View
+  
+class SpinalCord.Application extends Backbone.Router 
+  
       
 
 
