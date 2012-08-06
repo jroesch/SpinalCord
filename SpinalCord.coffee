@@ -41,10 +41,62 @@ else
 
 SpinalCord.VERSION = '0.0.1-ALPHA'
 
+# Attach a Cookie Object that Provides a convienient abstraction to the cookie
+SpinalCord.Cookie = (key, value, options) ->
+  # Set up encode, and decode functions
+  options = $.extend({}, options)
+  id = (s) -> s
+  encode = encodeURIComponent
+  decode = if options.raw then id else decodeURIComponent
+    
+  serializeCookie = (c) -> [
+    encode(key), '=', 
+    if options.raw then value else encode value,
+    if options.expires then '; expires=' + options.expires.toUTCString() else '',
+    if options.path then '; path=' + options.path else '',
+    if options.domain then '; domain=' + options.domain else '',
+    if options.secure then '; secure' else ''
+  ].join ''
+  
+  # Returns an object that consists of the parsed cookie
+  readCookie = -> 
+    pairs = document.cookie.split('; ');
+    cookieObj = {} 
+    
+    for each in pairs
+      pair = each.split("=")
+      newKey = decode(pair[0])
+      newValue = decode(pair[1]) || ""
+      cookieObj[newKey] = newValue
+      
+    cookieObj
+  
+  # Function Logic begins here.
+  cookie = readCookie()
+  
+  # Not sure if expiration works
+  # We need a more granular expiry time 
+  if options? and options.expires?
+    days = options.expires 
+    t = options.expires = new Date()
+    t.setDate(t.getDate() + days)
+
+  if key?
+    if value?
+      cookie[key] = String(value)
+      document.cookie = serializeCookie(cookie)
+      document.cookie
+    else
+      cookie[key]
+  else
+    undefined 
+    
 authFetch = (options) ->
   user = SpinalCord.getUser().toJSON()
   options = _.extend(options, user)
   super options
+
+SpinalCord.Auth = {}
 
 class SpinalCord.Auth.Model extends Backbone.Model
   fetch: authFetch
@@ -52,27 +104,35 @@ class SpinalCord.Auth.Model extends Backbone.Model
 class SpinalCord.Auth.Collection extends Backbone.Collection
   fetch: authFetch
   
-class SpinalCord.User 
+#class SpinalCord.User 
   # user impl. here
 
 # looks for <%= yield %>, to subsitute subview 
 # things are not that clear still
+###
 class SpinalCord.Layout 
   constructor: (@template) ->
    
   wrapWithLayout: (view) ->
     renderer = -> 
       @template yield: view.render()
+###
 
 # Better Dispatch aganist different View types  
+###
 class SpinalCord.View extends Backbone.View
   initialize(options) ->
     if (layout = options.withLayout)?
       @render = layout.wrapWithLayout(this)
+###
       
-class SpinalCord.ErrorView extends Backbone.View
+#class SpinalCord.ErrorView extends Backbone.View
   
-class SpinalCord.Application extends Backbone.Router 
+#class SpinalCord.Application extends Backbone.Router 
+  
+SpinalCord.run = (app) ->
+  #set up running app
+  
   
       
 
