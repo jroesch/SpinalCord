@@ -120,6 +120,9 @@ class SpinalCord.Auth.Collection extends Backbone.Collection
     user = SpinalCord.getUser().toJSON()
     super _.extend(options, user)
 
+#SpinalCord notifications? just subscribe to notifications
+# allow async messages to be passed around with pop downs
+
 #class SpinalCord.User 
   # user impl. here
 
@@ -196,7 +199,7 @@ SpinalCord.loadTemplate = (url) ->
 #build EventProxy as a helper to quickly set up event proxying
 SpinalCord.run = (app) ->
   # Set up user/sessions state ect
-  @App = new app();
+  SpinalCord.App = new app();
 
   
 
