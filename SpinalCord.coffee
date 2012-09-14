@@ -90,20 +90,36 @@ SpinalCord.Cookie = (key, value, options) ->
       cookie[key]
   else
     undefined 
-    
-authFetch = (options) ->
-  user = SpinalCord.getUser().toJSON()
-  options = _.extend(options, user)
-  super options
 
+# Routing improvements allows tracking of more implicit Application state   
+class SpinalCord.Application extends Backbone.Router 
+  filter: (options) ->
+    unless options["on"]
+      @redirectTo "/login"
+
+  redirectTo: (path) ->
+    window.location.hash = path
+    
+class SpinalCord.View extends Backbone.View
+  # Allow views to redirect (aka route the Application)
+  redirectTo: SpinalCord.Application::redirectTo
+
+# Interface for Resources that are behind HTTP Basic Auth
+# Use case is for those who serve resources with Basic Auth over SSL
 SpinalCord.Auth = {}
 
 class SpinalCord.Auth.Model extends Backbone.Model
-  fetch: authFetch
+  fetch: (options) ->
+    options = if options then _.clone(options) else {} 
+    user = SpinalCord.getUser().toJSON()
+    super _.extend(options, user)
   
 class SpinalCord.Auth.Collection extends Backbone.Collection
-  fetch: authFetch
-  
+  fetch: (options) ->
+    options = if options then _.clone(options) else {} 
+    user = SpinalCord.getUser().toJSON()
+    super _.extend(options, user)
+
 #class SpinalCord.User 
   # user impl. here
 
@@ -126,13 +142,64 @@ class SpinalCord.View extends Backbone.View
       @render = layout.wrapWithLayout(this)
 ###
       
-#class SpinalCord.ErrorView extends Backbone.View
+class SpinalCord.ErrorView extends Backbone.View
+  # Adds 'errors' as a field to 
+  withErrors: (template) ->
+      (data, settings) ->
+      data = _.clone(data)
+      _.extend(data, SpinalCord.errors)
+      template(data, settings)
+
+# Global Error caching between requests
+
+# Add some methods to the error object so that we can easily render it.
+class Errors 
+  constructor: ->
+    @errorTemplate = _.template("<li id=\"<%= name %>\"><%= msg %></li>")
+    @errorTag = "ul"
+
+  errorWrap: (errors) ->
+    open = "<#{@errorTag}>"
+    close = "</#{@errorTag}>"
+    concat = (x, y) -> if x isnt "" then x + "\n" + y else y
+    open + (errors.reduce(concat, "")) + close 
+
+  render: ->
+    errors = for key, value of this
+      @errorTemplate({ name: key, msg: value })
+    @errorWrap(errors)
+
+SpinalCord.errors = new Errors()
+
+    
+
+#SpinalCord Templating (for now proxy to underscore
+
+SpinalCord.template = _.template 
+
+SpinalCord.loadText = (url) ->
+  text = "Failed to load text."
   
-#class SpinalCord.Application extends Backbone.Router 
+  o = 
+    url: url
+    type: "GET"
+    dataType: 'text'
+    success: (data, textStatus, jqXHR) -> text = data 
+    error: (jqXHR, textStatus, errorThrown) -> text = textStatus 
+    async: false
+   
+  $.ajax(o) && text
   
+SpinalCord.loadTemplate = (url) ->
+  template(loadText(url))
+  
+#build EventProxy as a helper to quickly set up event proxying
 SpinalCord.run = (app) ->
-  #set up running app
+  # Set up user/sessions state ect
+  @App = new app();
+
   
+
   
       
 
