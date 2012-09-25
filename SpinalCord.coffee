@@ -199,7 +199,12 @@ SpinalCord.loadTemplate = (url) ->
 #build EventProxy as a helper to quickly set up event proxying
 SpinalCord.run = (app) ->
   # Set up user/sessions state ect
-  SpinalCord.App = new app();
+  main = ->
+    SpinalCord.App = new app();
+    Backbone.history.start()
+
+  # Run once the DOM is ready
+  $(main)
 
   
 
